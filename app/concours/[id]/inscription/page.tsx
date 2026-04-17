@@ -1,4 +1,4 @@
-'use client'
+ 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -226,7 +226,6 @@ function InscriptionForm() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-
             {joueurs.map((joueur, index) => (
               <div key={index} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
                 <p className="text-sm font-medium text-gray-700 mb-3">{joueurLabel(index)}</p>
@@ -268,7 +267,6 @@ function InscriptionForm() {
             >
               {loading ? 'Inscription en cours...' : 'Confirmer mon inscription'}
             </button>
-
           </form>
         </div>
 
