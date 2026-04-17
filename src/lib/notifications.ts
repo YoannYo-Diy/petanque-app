@@ -1,23 +1,19 @@
- export async function enregistrerNotifications(): Promise<PushSubscription | null> {
+export async function enregistrerNotifications(): Promise<any> {
+  if (typeof window === 'undefined') return null
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.log('Notifications non supportées')
     return null
   }
 
   try {
     const registration = await navigator.serviceWorker.register('/sw.js')
-    
     const permission = await Notification.requestPermission()
     if (permission !== 'granted') {
-      console.log('Permission refusée')
       return null
     }
-
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
     })
-
     return subscription
   } catch (error) {
     console.error('Erreur notification:', error)
@@ -26,7 +22,7 @@
 }
 
 export async function envoyerNotification(
-  subscription: PushSubscription,
+  subscription: any,
   title: string,
   body: string
 ) {
