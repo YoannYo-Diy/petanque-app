@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { enregistrerNotifications } from '@/lib/notifications'
 
 export default function InscriptionPage() {
   const [form, setForm] = useState({
@@ -12,6 +13,22 @@ export default function InscriptionPage() {
   })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'succes' | 'erreur'; texte: string } | null>(null)
+  const [notifAcceptees, setNotifAcceptees] = useState(false)
+  const [demandeNotif, setDemandeNotif] = useState(false)
+
+  useEffect(() => {
+    if (Notification.permission === 'granted') {
+      setNotifAcceptees(true)
+    }
+  }, [])
+
+  async function activerNotifications() {
+    const subscription = await enregistrerNotifications()
+    if (subscription) {
+      setNotifAcceptees(true)
+      setDemandeNotif(false)
+    }
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -30,7 +47,7 @@ export default function InscriptionPage() {
 
     const telPropre = form.telephone.replace(/\s/g, '')
     if (!/^(\+33|0)[0-9]{9}$/.test(telPropre)) {
-      setMessage({ type: 'erreur', texte: 'Numéro de téléphone invalide. Ex: 0612345678' })
+      setMessage({ type: 'erreur', texte: 'Numero de telephone invalide. Ex: 0612345678' })
       setLoading(false)
       return
     }
@@ -43,7 +60,7 @@ export default function InscriptionPage() {
         .single()
 
       if (joueurExistant) {
-        setMessage({ type: 'erreur', texte: 'Ce numéro de téléphone est déjà enregistré.' })
+        setMessage({ type: 'erreur', texte: 'Ce numero est deja enregistre.' })
         setLoading(false)
         return
       }
@@ -57,11 +74,12 @@ export default function InscriptionPage() {
 
       if (error) throw error
 
-      setMessage({ type: 'succes', texte: `Bienvenue ${form.prenom} ! Votre compte est créé.` })
+      setMessage({ type: 'succes', texte: `Bienvenue ${form.prenom} ! Votre compte est cree.` })
       setForm({ nom: '', prenom: '', telephone: '', club: '' })
+      setDemandeNotif(true)
 
     } catch (err: any) {
-      setMessage({ type: 'erreur', texte: err.message || JSON.stringify(err) })
+      setMessage({ type: 'erreur', texte: err.message || 'Une erreur est survenue.' })
     }
 
     setLoading(false)
@@ -74,8 +92,44 @@ export default function InscriptionPage() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-2">🎯</div>
           <h1 className="text-2xl font-bold text-gray-900">YoConcours</h1>
-          <p className="text-gray-500 text-sm mt-1">Créez votre compte joueur</p>
+          <p className="text-gray-500 text-sm mt-1">Creez votre compte joueur</p>
         </div>
+
+        {!notifAcceptees && !demandeNotif && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <p className="text-sm font-medium text-blue-800 mb-1">Activez les notifications</p>
+            <p className="text-xs text-blue-700 mb-3">
+              Pour recevoir vos convocations de match en temps reel, activez les notifications. Sans ca, vous risquez de rater votre match !
+            </p>
+            <button
+              onClick={activerNotifications}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-xl transition-colors"
+            >
+              Activer les notifications
+            </button>
+          </div>
+        )}
+
+        {notifAcceptees && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-6 text-center">
+            <p className="text-sm font-medium text-green-800">Notifications activees !</p>
+          </div>
+        )}
+
+        {demandeNotif && !notifAcceptees && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+            <p className="text-sm font-medium text-amber-800 mb-1">Derniere etape importante !</p>
+            <p className="text-xs text-amber-700 mb-3">
+              Activez les notifications pour etre averti quand votre match commence. Vous pouvez les desactiver plus tard.
+            </p>
+            <button
+              onClick={activerNotifications}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium py-2 rounded-xl transition-colors"
+            >
+              Activer maintenant
+            </button>
+          </div>
+        )}
 
         {message && (
           <div className={`rounded-xl p-4 mb-6 text-sm font-medium ${
@@ -104,7 +158,7 @@ export default function InscriptionPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Prénom <span className="text-red-500">*</span>
+              Prenom <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -118,7 +172,7 @@ export default function InscriptionPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Téléphone <span className="text-red-500">*</span>
+              Telephone <span className="text-red-500">*</span>
             </label>
             <input
               type="tel"
@@ -128,7 +182,7 @@ export default function InscriptionPage() {
               placeholder="0612345678"
               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-            <p className="text-xs text-gray-400 mt-1">Utilisé pour recevoir vos notifications WhatsApp</p>
+            <p className="text-xs text-gray-400 mt-1">Utilise pour les notifications de match</p>
           </div>
 
           <div>
@@ -140,7 +194,7 @@ export default function InscriptionPage() {
               name="club"
               value={form.club}
               onChange={handleChange}
-              placeholder="Pétanque Club Marseille"
+              placeholder="Petanque Club Marseille"
               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -150,12 +204,12 @@ export default function InscriptionPage() {
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-3 rounded-xl transition-colors mt-2"
           >
-            {loading ? 'Création en cours...' : 'Créer mon compte'}
+            {loading ? 'Creation en cours...' : 'Creer mon compte'}
           </button>
         </form>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Votre numéro de téléphone est votre identifiant unique
+          Votre numero de telephone est votre identifiant unique
         </p>
 
       </div>
