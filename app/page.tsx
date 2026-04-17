@@ -6,8 +6,7 @@ import { enregistrerNotifications } from '@/lib/notifications'
 
 export default function InscriptionPage() {
   const [form, setForm] = useState({
-    nom: '',
-    prenom: '',
+    nomPrenom: '',
     telephone: '',
     club: '',
   })
@@ -17,7 +16,7 @@ export default function InscriptionPage() {
   const [demandeNotif, setDemandeNotif] = useState(false)
 
   useEffect(() => {
-    if (Notification.permission === 'granted') {
+    if (typeof window !== 'undefined' && Notification.permission === 'granted') {
       setNotifAcceptees(true)
     }
   }, [])
@@ -39,7 +38,7 @@ export default function InscriptionPage() {
     setLoading(true)
     setMessage(null)
 
-    if (!form.nom || !form.prenom || !form.telephone) {
+    if (!form.nomPrenom || !form.telephone) {
       setMessage({ type: 'erreur', texte: 'Merci de remplir tous les champs obligatoires.' })
       setLoading(false)
       return
@@ -51,6 +50,10 @@ export default function InscriptionPage() {
       setLoading(false)
       return
     }
+
+    const parties = form.nomPrenom.trim().split(' ')
+    const nom = parties[0] || form.nomPrenom
+    const prenom = parties.slice(1).join(' ') || ''
 
     try {
       const { data: joueurExistant } = await supabase
@@ -66,16 +69,16 @@ export default function InscriptionPage() {
       }
 
       const { error } = await supabase.from('joueurs').insert({
-        nom: form.nom.toUpperCase(),
-        prenom: form.prenom,
+        nom: nom.toUpperCase(),
+        prenom: prenom,
         telephone: telPropre,
         num_licence: form.club,
       })
 
       if (error) throw error
 
-      setMessage({ type: 'succes', texte: `Bienvenue ${form.prenom} ! Votre compte est cree.` })
-      setForm({ nom: '', prenom: '', telephone: '', club: '' })
+      setMessage({ type: 'succes', texte: `Bienvenue ${form.nomPrenom} ! Votre compte est cree.` })
+      setForm({ nomPrenom: '', telephone: '', club: '' })
       setDemandeNotif(true)
 
     } catch (err: any) {
@@ -120,7 +123,7 @@ export default function InscriptionPage() {
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
             <p className="text-sm font-medium text-amber-800 mb-1">Derniere etape importante !</p>
             <p className="text-xs text-amber-700 mb-3">
-              Activez les notifications pour etre averti quand votre match commence. Vous pouvez les desactiver plus tard.
+              Activez les notifications pour etre averti quand votre match commence.
             </p>
             <button
               onClick={activerNotifications}
@@ -144,28 +147,14 @@ export default function InscriptionPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nom <span className="text-red-500">*</span>
+              Nom et Prenom <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
-              name="nom"
-              value={form.nom}
+              name="nomPrenom"
+              value={form.nomPrenom}
               onChange={handleChange}
-              placeholder="DUPONT"
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Prenom <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="prenom"
-              value={form.prenom}
-              onChange={handleChange}
-              placeholder="Jean"
+              placeholder="DUPONT Jean"
               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
